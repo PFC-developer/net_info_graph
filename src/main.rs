@@ -42,11 +42,15 @@ pub fn run() -> anyhow::Result<()> {
    let in_nodes = nodes.iter().filter(|x| x.1.seen_cnt > 0).count();
     eprintln!("{}/{} nodes found", in_nodes, nodes.len());
     println!("digraph nodes {{");
-    for k in nodes {
+    for k in &nodes {
 
         let node_out = k.1;
-        for n in node_out.outbound_peers {
-            println!("\t\"{}\" -> \"{}\";", node_out.node_id,n);
+        for n in &node_out.outbound_peers {
+            if let Some(no) = &nodes.get(n) {
+                if no.outbound_peers.len()>0 {
+                    println!("\t\"{}\" -> \"{}\";", node_out.node_id,n);
+                }
+            }
         }
       //  println!("{} - {} {}/{}/{}", k.0, node_out.seen_cnt, node_out.in_peers.len(), node_out.outbound_peers.len(), node_out.nonoutbound_peers.len())
     }
