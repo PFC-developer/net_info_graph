@@ -31,9 +31,8 @@ pub fn run() -> anyhow::Result<()> {
             if !line.trim().is_empty() {
                 let fields = line.split(",").collect::<Vec<&str>>();
                 if fields.len() != 5 {
-                    eprintln!("Bad Line {}", line);
+                    log::error!("Bad Line {}", line);
                 } else {
-                    eprintln!("{:?}", fields);
                     parse_gist(&mut nodes, fields[2], fields[4])?;
                 }
             }
@@ -42,15 +41,21 @@ pub fn run() -> anyhow::Result<()> {
     }
    let in_nodes = nodes.iter().filter(|x| x.1.seen_cnt > 0).count();
     eprintln!("{}/{} nodes found", in_nodes, nodes.len());
+    println!("digraph nodes {{");
     for k in nodes {
+
         let node_out = k.1;
-        eprintln!("{} - {} {}/{}/{}", k.0, node_out.seen_cnt, node_out.in_peers.len(), node_out.outbound_peers.len(), node_out.nonoutbound_peers.len())
+        for n in node_out.outbound_peers {
+            println!("\t\"{}\" -> \"{}\";", node_out.node_id,n);
+        }
+      //  println!("{} - {} {}/{}/{}", k.0, node_out.seen_cnt, node_out.in_peers.len(), node_out.outbound_peers.len(), node_out.nonoutbound_peers.len())
     }
+    println!("}}");
     Ok(())
 }
 
 pub fn parse_gist(nodes: &mut HashMap<String, NodeInfoOut>, id: &str, url: &str) -> anyhow::Result<()> {
-   eprintln!("URL: {}", url);
+   log::info!("URL: {}", url);
     let response = reqwest::blocking::get(url)?;
 
     let json: NetResult<NetInfo> = response.json()?;
@@ -95,7 +100,5 @@ pub fn parse_gist(nodes: &mut HashMap<String, NodeInfoOut>, id: &str, url: &str)
         });
         nodes.entry(id.to_string()).and_modify(|x| { x.in_peers.insert(node.node_info.id); });
     }
-
-
     Ok(())
 }
